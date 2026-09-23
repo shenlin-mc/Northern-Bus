@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>北部公交集团</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--m:#1A5FAD;--ml:#3D7BC4;--bg:#F2F5F9;--text:#333;--gray:#8A9BAE}
+body.admin-mode{--m:#6A3DB8;--ml:#8B5FD6}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);transition:background .4s;overflow-x:hidden}
+.site-header{background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.06);position:sticky;top:0;z-index:100}
+.header-top{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:12px 20px;gap:16px}
+.logo-area{display:flex;align-items:center;gap:10px}
+.logo-img{height:44px;width:auto;display:block;object-fit:contain}
+.header-right{display:flex;align-items:center;gap:10px;flex:1;max-width:450px}
+.search-box{flex:1;padding:9px 14px;border:1px solid #D0DCE8;border-radius:6px;font-size:14px;outline:none;min-width:0}
+.search-box:focus{border-color:var(--m)}
+.user-info{font-size:13px;color:var(--m);font-weight:600;white-space:nowrap}
+.lang-btn{padding:8px 14px;border:1px solid var(--m);border-radius:6px;background:#fff;color:var(--m);font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0}
+.main-nav{background:var(--m);display:flex;max-width:1200px;margin:0 auto;padding:0 20px;overflow-x:auto}
+.nav-link{padding:14px 24px;color:#fff;font-size:15px;text-decoration:none;cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;transition:all .2s}
+.nav-link:hover{background:rgba(255,255,255,.1)}
+.nav-link.active{background:rgba(255,255,255,.15);border-bottom-color:#FFD700;font-weight:600}
+.site-main{max-width:1200px;margin:0 auto;padding:20px;min-height:60vh}
+.page-view{display:none}
+.page-view.active{display:block}
+.loading-tip{text-align:center;padding:40px;color:var(--gray)}
+.view-title{color:var(--m);font-size:20px;font-weight:700;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--m)}
+.banner{background:linear-gradient(135deg,#1A5FAD 0%,#3D7BC4 50%,#5C9BD9 100%);border-radius:12px;height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;margin-bottom:20px;position:relative;overflow:hidden}
+.banner-title{font-size:28px;font-weight:700;margin-bottom:12px;letter-spacing:2px;z-index:1}
+.banner-sub{font-size:15px;opacity:.9;letter-spacing:3px;z-index:1}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+.stat-card{background:#fff;border-radius:12px;padding:20px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.stat-num{color:var(--m);font-size:28px;font-weight:700}
+.stat-label{color:var(--gray);font-size:13px;margin-top:6px}
+.service-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px}
+.service-card{background:#fff;border-radius:12px;padding:24px 12px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.05);cursor:pointer;transition:transform .2s,box-shadow .2s}
+.service-card:hover{transform:translateY(-3px);box-shadow:0 6px 18px rgba(26,95,173,.15)}
+.service-icon{font-size:32px;margin-bottom:8px}
+.service-name{color:var(--m);font-size:14px;font-weight:600}
+.half-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.half-card{background:#fff;border-radius:12px;padding:12px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 10px rgba(0,0,0,.05);cursor:pointer;color:var(--m);font-weight:600;font-size:14px}
+.half-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(26,95,173,.13)}
+.half-icon{font-size:20px}
+.content-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.content-box{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.05);min-width:0}
+.box-header{display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:2px solid var(--m);margin-bottom:12px}
+.box-title{color:var(--m);font-size:16px;font-weight:700}
+.box-list{display:flex;flex-direction:column;gap:8px}
+.box-item{display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px dashed #EEE;min-width:0;overflow:hidden;height:30px}
+.box-item:last-child{border-bottom:none}
+.item-dot{color:var(--m);font-weight:700;flex-shrink:0}
+.item-text{color:#555;font-size:14px;line-height:1.5;flex:1;white-space:nowrap;overflow:hidden;position:relative;min-width:0}
+.empty-tip{color:var(--gray);font-size:14px;text-align:center;padding:20px}
+.list{width:100%;display:flex;flex-direction:column;gap:10px}
+.list-item{background:#fff;border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.05);min-width:0}
+.route-badge{width:44px;height:44px;border-radius:10px;background:var(--m);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:15px}
+.list-info{flex:1;text-align:left;min-width:0;overflow:hidden}
+.list-name{color:#222;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;position:relative}
+.list-desc{color:var(--gray);font-size:12px;margin-top:2px}
+.reply-box{background:#EAF2FB;border-radius:8px;padding:10px 12px;margin-top:8px;font-size:13px;color:var(--m);width:100%}
+.reply-label{font-weight:700;margin-right:4px}
+.del-btn{background:#E74C3C;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;flex-shrink:0}
+.reply-btn{background:#E67E22;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;flex-shrink:0}
+.accept-btn{background:#2E8B57;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;flex-shrink:0}
+.admin-tools{background:#fff;border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px;box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:16px}
+.panel-title{color:var(--m);font-size:14px;font-weight:700}
+.panel-input{padding:10px 14px;border:1px solid #D0DCE8;border-radius:6px;font-size:14px;outline:none;width:100%}
+.panel-input:focus{border-color:var(--m)}
+.panel-btn{padding:10px;border:none;border-radius:6px;background:var(--m);color:#fff;font-size:14px;font-weight:600;cursor:pointer;width:100%}
+.user-card{background:#EAF2FB;padding:12px 16px;border-radius:8px;color:var(--m);font-weight:600;text-align:center}
+.tab-row{display:flex;gap:8px;width:100%}
+.type-btn{flex:1;padding:10px;border-radius:8px;border:1px solid var(--m);background:transparent;color:var(--m);font-size:13px;font-weight:600;cursor:pointer}
+.type-btn.active{background:var(--m);color:#fff}
+.about-text{color:#555;font-size:15px;line-height:1.8;margin-bottom:16px}
+.info-row{display:flex;padding:6px 0;font-size:14px}
+.info-label{color:var(--gray);min-width:100px}
+.admin-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:9999}
+.modal-box{background:#fff;border-radius:12px;padding:30px 24px;width:90%;max-width:320px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.login-icon{width:60px;height:60px;border-radius:16px;background:var(--m);color:#fff;font-size:28px;display:flex;align-items:center;justify-content:center}
+.login-title{color:var(--m);font-size:16px;font-weight:600}
+.cancel-btn{background:none;border:none;color:var(--gray);font-size:13px;cursor:pointer;padding:4px}
+.msg{font-size:13px;min-height:18px;text-align:center;color:#E74C3C}
+.site-footer{background:var(--m);color:#fff;text-align:center;padding:20px;margin-top:30px;font-size:13px;position:relative}
+.footer-line{opacity:.85}
+.footer-admin{position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:12px;opacity:.6;cursor:pointer}
+.footer-admin:hover{opacity:1}
+.route-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.route-card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 3px 14px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:12px;min-width:0;cursor:pointer}
+.route-card:hover{transform:translateY(-3px);box-shadow:0 8px 22px rgba(26,95,173,.13)}
+.route-card-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.route-num-box{background:var(--m);color:#fff;font-size:15px;font-weight:700;padding:6px 14px;border-radius:10px}
+.route-status{font-size:12px;color:#2E8B57;background:#E8F8EE;padding:4px 10px;border-radius:8px;font-weight:600}
+.route-status.stopped{color:#E74C3C;background:#FDECEA}
+.route-line{display:flex;flex-direction:column;gap:6px;padding-left:4px}
+.route-point{display:flex;align-items:center;gap:8px;font-size:14px;color:#444}
+.route-dot{width:8px;height:8px;border-radius:50%;background:var(--m);flex-shrink:0}
+.route-dot.end{background:#FFB800}
+.route-stops-count{background:#F8FAFD;border-radius:10px;padding:10px;font-size:13px;color:#555;border:1px dashed #D0DCE8;text-align:center}
+.route-actions{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap}
+.route-actions button{flex:1;min-width:60px;padding:8px;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-weight:600}
+.edit-btn{background:#EAF2FB;color:var(--m)}
+.del-btn2{background:#FDECEA;color:#E74C3C}
+.toggle-btn{background:#FFF4E0;color:#E67E22}
+.back-btn{background:#fff;border:1px solid var(--m);color:var(--m);padding:8px 16px;border-radius:8px;font-size:14px;cursor:pointer;margin-bottom:16px;font-weight:600}
+.back-btn:hover{background:var(--m);color:#fff}
+.detail-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.detail-num{background:var(--m);color:#fff;font-size:22px;font-weight:700;padding:8px 20px;border-radius:12px}
+.detail-status{font-size:14px;color:#2E8B57;background:#E8F8EE;padding:6px 14px;border-radius:8px;font-weight:600}
+.detail-status.stopped{color:#E74C3C;background:#FDECEA}
+.detail-line{background:#fff;border-radius:12px;padding:20px;margin-bottom:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.detail-line .route-point{font-size:16px}
+.detail-title{color:var(--m);font-size:16px;font-weight:700;margin:20px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--m)}
+.detail-stops{background:#fff;border-radius:12px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.detail-stop{display:flex;align-items:center;gap:12px;padding:8px 0;font-size:14px;position:relative}
+.detail-stop .stop-line{position:absolute;left:5px;top:0;bottom:0;width:2px;background:#D0DCE8;z-index:0}
+.detail-stop .stop-dot{width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid var(--m);flex-shrink:0;z-index:1;position:relative}
+.detail-stop:first-child .stop-dot{background:var(--m)}
+.detail-stop:last-child .stop-dot{background:#FFB800;border-color:#FFB800}
+.rolling{display:inline-block;white-space:nowrap}
+.rolling.scroll{animation:scroll-left 12s linear infinite;padding-left:100%}
+@keyframes scroll-left{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
+@media(max-width:768px){
+.header-top{flex-wrap:wrap;padding:12px 16px}
+.header-right{max-width:100%;width:100%}
+.main-nav{padding:0 10px}
+.nav-link{padding:12px 16px;font-size:14px}
+.stats-row,.service-row{grid-template-columns:repeat(2,1fr);gap:12px}
+.content-grid{grid-template-columns:1fr}
+.footer-admin{position:static;display:block;margin-top:8px;transform:none}
+.route-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+<div class="header-top">
+<div class="logo-area"><img src="https://pic1.imgdb.cn/i/034Tow2GJturbF02h8qKKq.png" alt="北部公交集团" class="logo-img"></div>
+<div class="header-right">
+<input type="text" class="search-box" id="searchBox" placeholder="搜索线路、公告…">
+<span class="user-info" id="userInfo"></span>
+<button class="lang-btn" id="langSwitch">EN</button>
+</div>
+</div>
+<nav class="main-nav" id="mainNav">
+<a class="nav-link active" data-nav="home" data-zh="首页" data-en="Home">首页</a>
+<a class="nav-link" data-nav="route" data-zh="线路" data-en="Routes">线路</a>
+<a class="nav-link" data-nav="notice" data-zh="公告" data-en="Notices">公告</a>
+<a class="nav-link" data-nav="service" data-zh="服务" data-en="Services">服务</a>
+<a class="nav-link" data-nav="about" data-zh="关于" data-en="About">关于</a>
+</nav>
+</header>
+
+<main class="site-main">
+
+<section class="page-view active" id="view-home">
+<div class="banner"><div class="banner-title" data-zh="欢迎乘坐北部公交" data-en="Welcome to Northern Bus">欢迎乘坐北部公交</div><div class="banner-sub" data-zh="安全 · 便捷 · 绿色出行" data-en="Safe · Convenient · Green Travel">安全 · 便捷 · 绿色出行</div></div>
+<div class="stats-row">
+<div class="stat-card"><div class="stat-num" id="statRoute">-</div><div class="stat-label" data-zh="线路" data-en="Routes">线路</div></div>
+<div class="stat-card"><div class="stat-num" id="statNotice">-</div><div class="stat-label" data-zh="公告" data-en="Notices">公告</div></div>
+<div class="stat-card"><div class="stat-num" id="statMember">-</div><div class="stat-label" data-zh="成员" data-en="Members">成员</div></div>
+</div>
+<div class="content-grid">
+<div class="content-box"><div class="box-header"><span class="box-title" data-zh="📢 最新公告" data-en="📢 Latest Notices">📢 最新公告</span></div><div class="box-list" id="homeNoticeList"><div class="loading-tip">加载中...</div></div></div>
+<div class="content-box"><div class="box-header"><span class="box-title" data-zh="🛣️ 热门线路" data-en="🛣️ Hot Routes">🛣️ 热门线路</span></div><div class="box-list" id="homeRouteList"><div class="loading-tip">加载中...</div></div></div>
+</div>
+</section>
+
+<section class="page-view" id="view-route">
+<h2 class="view-title" data-zh="线路列表" data-en="Route List">线路列表</h2>
+<div class="admin-tools" id="routeTools" style="display:none;">
+<div class="panel-title" data-zh="添加线路" data-en="Add Route">添加线路</div>
+<input type="text" id="newRouteNum" class="panel-input" placeholder="线路号" maxlength="10">
+<input type="text" id="newRouteStart" class="panel-input" placeholder="起点" maxlength="30">
+<input type="text" id="newRouteEnd" class="panel-input" placeholder="终点" maxlength="30">
+<input type="text" id="newRouteStatus" class="panel-input" placeholder="运行状态" maxlength="20" value="运营中">
+<button class="panel-btn" id="addRouteBtn" data-zh="添加" data-en="Add">添加</button>
+</div>
+<div class="route-grid" id="routeList"><div class="loading-tip">加载中...</div></div>
+</section>
+
+<section class="page-view" id="view-detail">
+<button class="back-btn" id="backBtn" data-zh="← 返回" data-en="← Back">← 返回</button>
+<div class="detail-header"><span class="detail-num" id="detailNum">1</span><span class="detail-status" id="detailStatus">运营中</span></div>
+<div class="detail-line">
+<div class="route-point"><span class="route-dot"></span><span id="detailStart">起点</span></div>
+<div class="route-point"><span class="route-dot end"></span><span id="detailEnd">终点</span></div>
+</div>
+<h3 class="detail-title" data-zh="线路公告" data-en="Route Notices">线路公告</h3>
+<div class="list" id="routeNoticeList"></div>
+<h3 class="detail-title" data-zh="停靠站" data-en="Stops">停靠站</h3>
+<div class="detail-stops" id="detailStops"></div>
+</section>
+
+<section class="page-view" id="view-notice">
+<h2 class="view-title" data-zh="公告列表" data-en="Notice List">公告列表</h2>
+<div class="admin-tools" id="noticeTools" style="display:none;">
+<div class="panel-title" data-zh="发布公告" data-en="Publish Notice">发布公告</div>
+<input type="text" id="newNotice" class="panel-input" placeholder="公告内容" maxlength="100">
+<button class="panel-btn" id="addNoticeBtn" data-zh="发布" data-en="Publish">发布</button>
+</div>
+<div class="list" id="noticeList"><div class="loading-tip">加载中...</div></div>
+</section>
+
+<section class="page-view" id="view-service">
+<h2 class="view-title" data-zh="服务入口" data-en="Services">服务入口</h2>
+<div class="service-row">
+<div class="service-card" data-jump="route"><div class="service-icon">🛣️</div><div class="service-name" data-zh="线路查询" data-en="Route Query">线路查询</div></div>
+<div class="service-card" data-jump="notice"><div class="service-icon">📢</div><div class="service-name" data-zh="公告查看" data-en="View Notices">公告查看</div></div>
+<div class="service-card" data-jump="feedback"><div class="service-icon">📮</div><div class="service-name" data-zh="意见箱" data-en="Feedback Box">意见箱</div></div>
+<div class="service-card" data-jump="about"><div class="service-icon">ℹ️</div><div class="service-name" data-zh="关于我们" data-en="About Us">关于我们</div></div>
+</div>
+<div class="half-row">
+<div class="half-card" data-jump="join"><span class="half-icon">🙋</span><span data-zh="加入我们" data-en="Join Us">加入我们</span></div>
+<div class="half-card" id="loginEntry"><span class="half-icon">🔑</span><span data-zh="登录" data-en="Login">登录</span></div>
+</div>
+</section>
+
+<section class="page-view" id="view-join">
+<button class="back-btn" data-back data-zh="← 返回" data-en="← Back">← 返回</button>
+<h2 class="view-title" data-zh="加入我们" data-en="Join Us">加入我们</h2>
+<div id="joinGuest">
+<div class="admin-tools">
+<div class="panel-title" data-zh="注册新成员" data-en="Register">注册新成员</div>
+<input type="text" id="joinName" class="panel-input" placeholder="名字或账号" maxlength="20">
+<input type="password" id="joinPwd" class="panel-input" placeholder="6位数字密码" maxlength="6">
+<button class="panel-btn" id="joinBtn" data-zh="注册" data-en="Register">注册</button>
+<div class="msg" id="joinMsg"></div>
+</div>
+</div>
+<div id="joinUser" style="display:none;">
+<div class="admin-tools">
+<div class="panel-title" data-zh="我的信息" data-en="My Info">我的信息</div>
+<div class="user-card"><span id="joinUserName">-</span></div>
+<button class="panel-btn" id="logoutBtn" data-zh="退出登录" data-en="Logout">退出登录</button>
+</div>
+</div>
+</section>
+
+<section class="page-view" id="view-feedback">
+<button class="back-btn" data-back data-zh="← 返回" data-en="← Back">← 返回</button>
+<h2 class="view-title" data-zh="意见箱" data-en="Feedback Box">意见箱</h2>
+<div id="fbSendArea">
+<div class="admin-tools">
+<div class="panel-title" data-zh="发送意见 / 举报" data-en="Send Feedback / Report">发送意见 / 举报</div>
+<div class="tab-row">
+<button class="type-btn active" data-ftype="feedback" data-zh="意见" data-en="Feedback">意见</button>
+<button class="type-btn" data-ftype="report" data-zh="举报" data-en="Report">举报</button>
+</div>
+<input type="text" id="fbName" class="panel-input" placeholder="您的称呼（可选）" maxlength="20">
+<input type="text" id="fbContent" class="panel-input" placeholder="内容" maxlength="200">
+<button class="panel-btn" id="fbSendBtn" data-zh="发送" data-en="Send">发送</button>
+<div class="msg" id="fbMsg"></div>
+</div>
+</div>
+<div id="fbMyArea" style="display:none;"><h3 class="detail-title" data-zh="我的消息" data-en="My Messages">我的消息</h3><div class="list" id="myFbList"></div></div>
+<div id="fbAdmin" style="display:none;"><h3 class="detail-title" data-zh="收到的意见 / 举报" data-en="Received Feedback">收到的意见 / 举报</h3><div class="list" id="adminFbList"></div></div>
+</section>
+
+<section class="page-view" id="view-about">
+<h2 class="view-title" data-zh="关于我们" data-en="About Us">关于我们</h2>
+<div class="content-box about-box">
+<div class="about-text" data-zh="北部公交集团是一家以轨道交通和公交闻名的现代化交通企业。我们致力于为市民提供安全、便捷、绿色的出行服务。" data-en="Northern Bus Group is a modern transit company. We are committed to providing safe, convenient and green travel for citizens.">北部公交集团是一家以轨道交通和公交闻名的现代化交通企业。我们致力于为市民提供安全、便捷、绿色的出行服务。</div>
+<div class="about-info">
+<div class="info-row"><span class="info-label" data-zh="成立时间：" data-en="Founded: ">成立时间：</span><span>2026</span></div>
+<div class="info-row"><span class="info-label" data-zh="运营线路：" data-en="Routes: ">运营线路：</span><span id="aboutRouteNum">-</span></div>
+<div class="info-row"><span class="info-label" data-zh="联系方式：" data-en="Contact: ">联系方式：</span><span>QQ 3068861627</span></div>
+</div>
+</div>
+</section>
+
+<div class="admin-modal" id="adminModal" style="display:none;">
+<div class="modal-box">
+<div class="login-icon">🛡️</div><div class="login-title" data-zh="管理员登录" data-en="Admin Login">管理员登录</div>
+<input type="password" id="adminPwd" class="panel-input" placeholder="请输入密码">
+<button class="panel-btn" id="adminLoginBtn" data-zh="登录" data-en="Login">登录</button>
+<div class="msg" id="adminMsg"></div>
+<button class="cancel-btn" id="adminCancel" data-zh="取消" data-en="Cancel">取消</button>
+</div>
+</div>
+
+<div class="admin-modal" id="memberModal" style="display:none;">
+<div class="modal-box">
+<div class="login-icon">🔑</div><div class="login-title" data-zh="成员登录" data-en="Member Login">成员登录</div>
+<input type="text" id="memberLoginName" class="panel-input" placeholder="名字或账号">
+<input type="password" id="memberLoginPwd" class="panel-input" placeholder="6位数字密码" maxlength="6">
+<button class="panel-btn" id="memberLoginBtn" data-zh="登录" data-en="Login">登录</button>
+<div class="msg" id="memberMsg"></div>
+<button class="cancel-btn" id="memberCancel" data-zh="取消" data-en="Cancel">取消</button>
+</div>
+</div>
+
+</main>
+
+<footer class="site-footer">
+<div class="footer-line" data-zh="© 2024 北部公交集团 版权所有" data-en="© 2024 Northern Bus Group">© 2024 北部公交集团 版权所有</div>
+<div class="footer-admin" id="adminEntry" data-zh="管理员入口" data-en="Admin Entry">管理员入口</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+'use strict';
+
+function $(id){return document.getElementById(id)}
+
+var SUPABASE_URL='https://wzgxwsbzyeyyantbqrom.supabase.co';
+var SUPABASE_KEY='sb_publishable_asnGGKDClOlAqRnnaQ3hUw_JOmlS72H';
+var db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+var routes=[];
+var notices=[];
+var members=[];
+var feedbacks=[];
+var current=null;
+var isAdmin=false;
+var curIdx=-1;
+var fbType='feedback';
+var lang='zh';
+
+function applyLang(l){
+lang=l;
+document.querySelectorAll('[data-zh][data-en]').forEach(function(el){
+el.textContent=el.getAttribute('data-'+l);
+});
+var L=$('langSwitch');
+if(L)L.textContent=(l==='zh')?'EN':'中文';
+renderHome();renderRoutes();renderNotices();updateStats();renderJoin();renderFeedback();
+}
+
+function checkRolling(container){
+setTimeout(function(){
+if(!container)return;
+container.querySelectorAll('.rolling').forEach(function(el){
+var box=el.parentNode;
+el.classList.remove('scroll');
+el.style.paddingLeft='';
+if(el.scrollWidth>box.clientWidth){
+el.classList.add('scroll');
+}
+});
+},50);
+}
+
+function updateStats(){
+try{
+if($('statRoute'))$('statRoute').textContent=routes.length;
+if($('statNotice'))$('statNotice').textContent=notices.length;
+if($('statMember'))$('statMember').textContent=members.length;
+if($('aboutRouteNum'))$('aboutRouteNum').textContent=routes.length;
+}catch(e){}
+}
+function renderUser(){
+try{
+var u=$('userInfo');
+if(u)u.textContent=current?'👤 '+(current.name||current.account):'';
+}catch(e){}
+}
+function showView(v){
+try{
+var views=document.querySelectorAll('.page-view');
+for(var i=0;i<views.length;i++)views[i].classList.remove('active');
+var t=$('view-'+v);
+if(t)t.classList.add('active');
+var links=document.querySelectorAll('.nav-link');
+for(var j=0;j<links.length;j++){
+links[j].classList.toggle('active',links[j].getAttribute('data-nav')===v);
+}
+}catch(e){}
+}
+function canEdit(){return isAdmin||!!current}
+
+function renderHome(){
+try{
+var B=$('homeNoticeList');
+if(B){
+B.innerHTML='';
+var max=notices.length>3?3:notices.length;
+for(var i=0;i<max;i++)B.innerHTML+='<div class="box-item"><span class="item-dot">·</span><span class="item-text"><span class="rolling">'+notices[i].content+'</span></span></div>';
+if(!notices.length)B.innerHTML='<div class="empty-tip">'+(lang==='zh'?'暂无公告':'No notices')+'</div>';
+checkRolling(B);
+}
+var R=$('homeRouteList');
+if(R){
+R.innerHTML='';
+var max2=routes.length>3?3:routes.length;
+for(var j=0;j<max2;j++)R.innerHTML+='<div class="box-item" data-hr="'+routes[j].id+'"><span class="item-dot">·</span><span class="item-text">'+routes[j].num+'路 · '+routes[j].start+' ↔ '+routes[j].end+'</span></div>';
+if(!routes.length)R.innerHTML='<div class="empty-tip">'+(lang==='zh'?'暂无线路':'No routes')+'</div>';
+R.querySelectorAll('[data-hr]').forEach(function(el){
+el.onclick=function(){openDetail(parseInt(this.getAttribute('data-hr')))};
+});
+}
+}catch(e){}
+}
+
+function renderRoutes(kw){
+try{
+var B=$('routeList');
+if(!B)return;
+B.innerHTML='';
+var cnt=0;
+for(var i=0;i<routes.length;i++){
+var r=routes[i];
+if(kw&&r.num.indexOf(kw)<0&&r.start.indexOf(kw)<0&&r.end.indexOf(kw)<0)continue;
+cnt++;
+var stopped=r.status.indexOf('停')>=0;
+var stops=r.stops||[];
+var d=document.createElement('div');
+d.className='route-card';
+d.setAttribute('data-id',r.id);
+var actions='';
+if(isAdmin){
+actions='<div class="route-actions"><button class="toggle-btn" data-toggle="'+r.id+'">'+(stopped?(lang==='zh'?'开启运营':'Start'):(lang==='zh'?'停运':'Stop'))+'</button><button class="edit-btn" data-edit="'+r.id+'">'+(lang==='zh'?'编辑':'Edit')+'</button><button class="del-btn2" data-del="'+r.id+'">'+(lang==='zh'?'删除':'Del')+'</button></div>';
+}
+d.innerHTML='<div class="route-card-head"><span class="route-num-box">'+r.num+'</span><span class="route-status'+(stopped?' stopped':'')+'">'+r.status+'</span></div>'
++'<div class="route-line"><div class="route-point"><span class="route-dot"></span>'+(lang==='zh'?'起点：':'Start: ')+r.start+'</div><div class="route-point"><span class="route-dot end"></span>'+(lang==='zh'?'终点：':'End: ')+r.end+'</div></div>'
++'<div class="route-stops-count">'+(lang==='zh'?'共 '+stops.length+' 站 · 点击查看详情':'Total '+stops.length+' stops')+'</div>'
++actions;
+B.appendChild(d);
+}
+if(!cnt)B.innerHTML='<div class="empty-tip">'+(lang==='zh'?'暂无线路':'No routes')+'</div>';
+B.querySelectorAll('.route-card').forEach(function(card){
+card.onclick=function(e){
+if(e.target.tagName==='BUTTON')return;
+openDetail(parseInt(this.getAttribute('data-id')));
+};
+});
+B.querySelectorAll('[data-toggle]').forEach(function(b){
+b.onclick=async function(e){
+e.stopPropagation();
+var id=parseInt(this.getAttribute('data-toggle'));
+var r=routes.find(function(x){return x.id===id});
+var newStatus=r.status.indexOf('停')>=0?'运营中':'已停运';
+await db.from('routes').update({status:newStatus}).eq('id',id);
+r.status=newStatus;
+renderRoutes();renderHome();
+};
+});
+B.querySelectorAll('[data-del]').forEach(function(b){
+b.onclick=async function(e){
+e.stopPropagation();
+var id=parseInt(this.getAttribute('data-del'));
+if(!confirm(lang==='zh'?'确定删除？':'Delete?'))return;
+await db.from('routes').delete().eq('id',id);
+routes=routes.filter(function(x){return x.id!==id});
+renderRoutes();updateStats();renderHome();
+};
+});
+B.querySelectorAll('[data-edit]').forEach(function(b){
+b.onclick=async function(e){
+e.stopPropagation();
+var id=parseInt(this.getAttribute('data-edit'));
+var r=routes.find(function(x){return x.id===id});
+var n=prompt('线路号',r.num);if(n===null)return;
+var s=prompt('起点',r.start);if(s===null)return;
+var en=prompt('终点',r.end);if(en===null)return;
+var st=prompt('运行状态',r.status);if(st===null)return;
+var ss=prompt('停靠站（逗号分隔）',(r.stops||[]).join(','));if(ss===null)return;
+var newStops=ss.split(/[,，]/).map(function(x){return x.trim()}).filter(function(x){return x});
+await db.from('routes').update({num:n,start:s,end:en,status:st,stops:newStops}).eq('id',id);
+r.num=n;r.start=s;r.end=en;r.status=st;r.stops=newStops;
+renderRoutes();renderHome();
+};
+});
+}catch(e){console.error(e)}
+}
+
+function openDetail(id){
+try{
+var r=routes.find(function(x){return x.id===id});
+if(!r)return;
+curIdx=id;
+var stopped=r.status.indexOf('停')>=0;
+if($('detailNum'))$('detailNum').textContent=r.num;
+var st=$('detailStatus');
+if(st){st.textContent=r.status;st.className='detail-status'+(stopped?' stopped':'');}
+if($('detailStart'))$('detailStart').textContent=r.start;
+if($('detailEnd'))$('detailEnd').textContent=r.end;
+var stops=r.stops||[], SH='';
+for(var s=0;s<stops.length;s++)SH+='<div class="detail-stop"><span class="stop-line"></span><span class="stop-dot"></span><span>'+stops[s]+'</span></div>';
+if($('detailStops'))$('detailStops').innerHTML=SH||'<div class="empty-tip">'+(lang==='zh'?'暂无停靠站':'No stops')+'</div>';
+var rn=r.notices||[], RN='';
+for(var n=0;n<rn.length;n++)RN+='<div class="list-item"><div class="route-badge">📢</div><div class="list-info"><div class="list-name"><span class="rolling">'+rn[n]+'</span></div></div></div>';
+var box=$('routeNoticeList');
+if(box){
+box.innerHTML=RN||'<div class="empty-tip">'+(lang==='zh'?'暂无线路公告':'No notices')+'</div>';
+checkRolling(box);
+}
+showView('detail');
+}catch(e){}
+}
+
+function renderNotices(){
+try{
+var B=$('noticeList');
+if(!B)return;
+B.innerHTML='';
+for(var i=0;i<notices.length;i++)B.innerHTML+='<div class="list-item"><div class="route-badge">📢</div><div class="list-info"><div class="list-name"><span class="rolling">'+notices[i].content+'</span></div></div>'+(isAdmin?'<button class="del-btn" data-i="'+notices[i].id+'">'+(lang==='zh'?'删除':'Del')+'</button>':'')+'</div>';
+if(!notices.length)B.innerHTML='<div class="empty-tip">'+(lang==='zh'?'暂无公告':'No notices')+'</div>';
+checkRolling(B);
+B.querySelectorAll('.del-btn').forEach(function(b){
+b.onclick=async function(){
+var id=parseInt(this.getAttribute('data-i'));
+await db.from('notices').delete().eq('id',id);
+notices=notices.filter(function(x){return x.id!==id});
+renderNotices();updateStats();renderHome();
+};
+});
+if($('noticeTools'))$('noticeTools').style.display=isAdmin?'flex':'none';
+}catch(e){}
+}
+
+function renderJoin(){
+try{
+var g=$('joinGuest'),u=$('joinUser');
+if(current){if(g)g.style.display='none';if(u)u.style.display='flex';if($('joinUserName'))$('joinUserName').textContent='👤 '+(current.name||current.account);}
+else{if(g)g.style.display='flex';if(u)u.style.display='none';}
+}catch(e){}
+}
+
+function renderFeedback(){
+try{
+var s=$('fbSendArea'),m=$('fbMyArea'),a=$('fbAdmin');
+if(s)s.style.display='flex';
+if(isAdmin){if(a)a.style.display='block';if(m)m.style.display='none';renderAdminFb();}
+else if(current){if(a)a.style.display='none';if(m)m.style.display='block';renderMyFb();}
+else{if(a)a.style.display='none';if(m)m.style.display='none';}
+}catch(e){}
+}
+function renderMyFb(){
+try{
+var B=$('myFbList');if(!B)return;
+B.innerHTML='';
+var who=current?current.name:'';
+var mine=feedbacks.filter(function(f){return f.sender===who});
+if(!mine.length){B.innerHTML='<div class="empty-tip">'+(lang==='zh'?'暂无消息':'No messages')+'</div>';return}
+for(var i=0;i<mine.length;i++){
+var f=mine[i];
+var h='<div class="list-item"><div class="route-badge">'+(f.type==='report'?'🚨':'📮')+'</div><div class="list-info"><div class="list-name">'+f.content+'</div><div class="list-desc">'+(f.type==='report'?(lang==='zh'?'举报':'Report'):(lang==='zh'?'意见':'Feedback'))+' · '+(f.accepted?(lang==='zh'?'已受理':'Accepted'):(lang==='zh'?'未受理':'Not accepted'))+'</div>';
+if(f.reply)h+='<div class="reply-box"><span class="reply-label">'+(lang==='zh'?'管理员回复：':'Admin reply: ')+'</span>'+f.reply+'</div>';
+h+='</div></div>';
+B.innerHTML+=h;
+}
+}catch(e){}
+}
+function renderAdminFb(){
+try{
+var B=$('adminFbList');if(!B)return;
+B.innerHTML='';
+if(!feedbacks.length){B.innerHTML='<div class="empty-tip">'+(lang==='zh'?'暂无反馈':'No feedback')+'</div>';return}
+for(var i=0;i<feedbacks.length;i++){
+var f=feedbacks[i];
+var h='<div class="list-item"><div class="route-badge">'+(f.type==='report'?'🚨':'📮')+'</div><div class="list-info"><div class="list-name">'+f.content+'</div><div class="list-desc">'+(lang==='zh'?'来自：':'From: ')+f.sender+' · '+(f.type==='report'?(lang==='zh'?'举报':'Report'):(lang==='zh'?'意见':'Feedback'))+' · '+(f.accepted?(lang==='zh'?'已受理':'Accepted'):(lang==='zh'?'未受理':'Not accepted'))+'</div>';
+if(f.reply)h+='<div class="reply-box"><span class="reply-label">'+(lang==='zh'?'已回复：':'Replied: ')+'</span>'+f.reply+'</div>';
+h+='</div>';
+if(!f.accepted)h+='<button class="accept-btn" data-ac="'+f.id+'">'+(lang==='zh'?'受理':'Accept')+'</button>';
+h+='<button class="reply-btn" data-rp="'+f.id+'">'+(lang==='zh'?'回复':'Reply')+'</button><button class="del-btn" data-fb="'+f.id+'">'+(lang==='zh'?'删除':'Del')+'</button></div>';
+B.innerHTML+=h;
+}
+B.querySelectorAll('[data-ac]').forEach(function(b){
+b.onclick=async function(){
+var id=parseInt(this.getAttribute('data-ac'));
+await db.from('feedbacks').update({accepted:true}).eq('id',id);
+var f=feedbacks.find(function(x){return x.id===id});
+if(f)f.accepted=true;
+renderAdminFb();
+};
+});
+B.querySelectorAll('[data-rp]').forEach(function(b){
+b.onclick=async function(){
+var id=parseInt(this.getAttribute('data-rp'));
+var r=prompt('输入回复内容','');
+if(r===null)return;
+await db.from('feedbacks').update({reply:r,accepted:true}).eq('id',id);
+var f=feedbacks.find(function(x){return x.id===id});
+if(f){f.reply=r;f.accepted=true;}
+renderAdminFb();
+};
+});
+B.querySelectorAll('[data-fb]').forEach(function(b){
+b.onclick=async function(){
+var id=parseInt(this.getAttribute('data-fb'));
+await db.from('feedbacks').delete().eq('id',id);
+feedbacks=feedbacks.filter(function(x){return x.id!==id});
+renderAdminFb();
+};
+});
+}catch(e){}
+}
+
+function switchView(v){
+showView(v);
+if(v==='route')renderRoutes();
+if(v==='notice')renderNotices();
+if(v==='home'){renderHome();updateStats()}
+if(v==='about')updateStats();
+if(v==='join')renderJoin();
+if(v==='feedback')renderFeedback();
+}
+
+document.querySelectorAll('.nav-link').forEach(function(l){
+l.onclick=function(){switchView(this.getAttribute('data-nav'))};
+});
+document.querySelectorAll('.service-card[data-jump]').forEach(function(c){
+c.onclick=function(){switchView(this.getAttribute('data-jump'))};
+});
+document.querySelectorAll('.half-card[data-jump]').forEach(function(c){
+c.onclick=function(){switchView(this.getAttribute('data-jump'))};
+});
+if($('backBtn'))$('backBtn').onclick=function(){switchView('route')};
+document.querySelectorAll('[data-back]').forEach(function(b){
+b.onclick=function(){switchView('service')};
+});
+if($('searchBox'))$('searchBox').oninput=function(){
+var kw=this.value.trim();
+if(kw){switchView('route');renderRoutes(kw)}
+};
+
+if($('joinBtn'))$('joinBtn').onclick=async function(){
+var n=$('joinName').value.trim();
+var pw=$('joinPwd').value.trim();
+var m=$('joinMsg');
+if(!n||!pw){m.textContent=lang==='zh'?'请填写完整':'Fill all';return}
+if(pw.length!==6||!/^\d+$/.test(pw)){m.textContent=lang==='zh'?'密码需6位数字':'6 digits';return}
+var ex=members.find(function(x){return x.name===n});
+if(ex){m.textContent=lang==='zh'?'已存在':'Exists';return}
+var res=await db.from('members').insert({name:n,pwd:pw}).select();
+if(res.data&&res.data[0]){
+current=res.data[0];
+members.push(res.data[0]);
+updateStats();renderUser();renderJoin();
+m.textContent=lang==='zh'?'注册成功':'Registered';
+$('joinName').value='';
+$('joinPwd').value='';
+}
+};
+if($('logoutBtn'))$('logoutBtn').onclick=function(){
+current=null;renderUser();renderJoin();renderRoutes();
+};
+
+document.querySelectorAll('#fbSendArea .type-btn').forEach(function(b){
+b.onclick=function(){
+document.querySelectorAll('#fbSendArea .type-btn').forEach(function(x){x.classList.remove('active')});
+this.classList.add('active');
+fbType=this.getAttribute('data-ftype');
+};
+});
+if($('fbSendBtn'))$('fbSendBtn').onclick=async function(){
+var v=$('fbContent').value.trim();
+var nm=$('fbName').value.trim();
+var m=$('fbMsg');
+if(!v){m.textContent=lang==='zh'?'请输入内容':'Enter content';return}
+var who=current?current.name:(nm||'游客');
+var res=await db.from('feedbacks').insert({type:fbType,content:v,sender:who,accepted:false,reply:''}).select();
+if(res.data&&res.data[0])feedbacks.push(res.data[0]);
+$('fbContent').value='';
+m.textContent=lang==='zh'?'发送成功':'Sent';
+renderFeedback();
+};
+
+if($('adminEntry'))$('adminEntry').onclick=function(){if($('adminModal'))$('adminModal').style.display='flex'};
+if($('adminCancel'))$('adminCancel').onclick=function(){if($('adminModal'))$('adminModal').style.display='none'};
+if($('adminLoginBtn'))$('adminLoginBtn').onclick=function(){
+if($('adminPwd').value.trim()==='073166'){
+isAdmin=true;
+document.body.classList.add('admin-mode');
+if($('routeTools'))$('routeTools').style.display='flex';
+if($('noticeTools'))$('noticeTools').style.display='flex';
+$('adminModal').style.display='none';
+$('adminPwd').value='';
+$('adminMsg').textContent='';
+renderRoutes();renderNotices();renderFeedback();
+}else{
+$('adminMsg').textContent=lang==='zh'?'密码错误':'Wrong';
+$('adminPwd').value='';
+}
+};
+if($('adminPwd'))$('adminPwd').onkeydown=function(e){
+if(e.key==='Enter')$('adminLoginBtn').click();
+};
+
+if($('loginEntry'))$('loginEntry').onclick=function(){if($('memberModal'))$('memberModal').style.display='flex'};
+if($('memberCancel'))$('memberCancel').onclick=function(){if($('memberModal'))$('memberModal').style.display='none'};
+if($('memberLoginBtn'))$('memberLoginBtn').onclick=async function(){
+var n=$('memberLoginName').value.trim();
+var pw=$('memberLoginPwd').value.trim();
+var m=$('memberMsg');
+var res=await db.from('members').select().eq('name',n).eq('pwd',pw);
+if(res.data&&res.data.length){
+current=res.data[0];
+$('memberModal').style.display='none';
+$('memberLoginName').value='';
+$('memberLoginPwd').value='';
+m.textContent='';
+renderUser();renderJoin();renderRoutes();
+}else{
+m.textContent=lang==='zh'?'账号或密码错误':'Wrong';
+$('memberLoginPwd').value='';
+}
+};
+if($('memberLoginPwd'))$('memberLoginPwd').onkeydown=function(e){
+if(e.key==='Enter')$('memberLoginBtn').click();
+};
+
+if($('addRouteBtn'))$('addRouteBtn').onclick=async function(){
+var n=$('newRouteNum').value.trim();
+var s=$('newRouteStart').value.trim();
+var e=$('newRouteEnd').value.trim();
+var st=$('newRouteStatus').value.trim()||'运营中';
+if(!n||!s||!e)return;
+var ss=prompt('停靠站（逗号分隔，可留空）','');
+var stops=ss?ss.split(/[,，]/).map(function(x){return x.trim()}).filter(function(x){return x}):[];
+var res=await db.from('routes').insert({num:n,start:s,end:e,status:st,stops:stops,notices:[]}).select();
+if(res.data&&res.data[0])routes.push(res.data[0]);
+$('newRouteNum').value='';
+$('newRouteStart').value='';
+$('newRouteEnd').value='';
+$('newRouteStatus').value='运营中';
+renderRoutes();updateStats();renderHome();
+};
+
+if($('addNoticeBtn'))$('addNoticeBtn').onclick=async function(){
+var v=$('newNotice').value.trim();
+if(!v)return;
+var res=await db.from('notices').insert({content:v}).select();
+if(res.data&&res.data[0])notices.unshift(res.data[0]);
+$('newNotice').value='';
+renderNotices();updateStats();renderHome();
+};
+
+if($('langSwitch'))$('langSwitch').onclick=function(){
+lang=(lang==='zh')?'en':'zh';
+applyLang(lang);
+};
+
+async function loadData(){
+var r1=await db.from('routes').select();
+var r2=await db.from('notices').select();
+var r3=await db.from('members').select();
+var r4=await db.from('feedbacks').select();
+routes=r1.data||[];
+notices=(r2.data||[]).reverse();
+members=r3.data||[];
+feedbacks=r4.data||[];
+renderHome();renderRoutes();renderNotices();updateStats();renderUser();
+}
+
+$('langSwitch').textContent='EN';
+loadData();
+
+})();
+</script>
+
+</body>
+</html>
